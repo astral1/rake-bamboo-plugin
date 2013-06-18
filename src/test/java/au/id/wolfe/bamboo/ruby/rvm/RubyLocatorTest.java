@@ -1,7 +1,9 @@
 package au.id.wolfe.bamboo.ruby.rvm;
 
+import au.id.wolfe.bamboo.ruby.common.RubyRuntime;
 import au.id.wolfe.bamboo.ruby.fixtures.RvmFixtures;
-import au.id.wolfe.bamboo.ruby.rvm.util.FileSystemHelper;
+import au.id.wolfe.bamboo.ruby.util.EnvUtils;
+import au.id.wolfe.bamboo.ruby.util.FileSystemHelper;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.junit.Before;
@@ -18,7 +20,7 @@ import static org.junit.Assert.*;
 import static org.mockito.Mockito.when;
 
 /**
- * Ruby locator tests
+ * RVM locator tests
  */
 @RunWith(MockitoJUnitRunner.class)
 public class RubyLocatorTest {
@@ -26,11 +28,11 @@ public class RubyLocatorTest {
     @Mock
     FileSystemHelper fileSystemHelper;
 
-    RubyLocator rubyLocator;
+    RvmRubyLocator rvmRubyLocator;
 
     @Before
     public void setUp() throws Exception {
-        rubyLocator = new RubyLocator(fileSystemHelper, RvmFixtures.getUserRvmInstallation());
+        rvmRubyLocator = new RvmRubyLocator(fileSystemHelper, RvmFixtures.getUserRvmInstallation());
     }
 
     @Test
@@ -45,25 +47,25 @@ public class RubyLocatorTest {
 
         currentEnvVars.put("PATH", RvmFixtures.TEST_CURRENT_PATH);
 
-        Map<String, String> envVars = rubyLocator.buildEnv("ruby-1.9.3-p0@default", currentEnvVars);
+        Map<String, String> envVars = rvmRubyLocator.buildEnv("ruby-1.9.3-p0@default", currentEnvVars);
 
-        assertTrue(envVars.containsKey(RvmUtil.MY_RUBY_HOME));
+        assertTrue(envVars.containsKey(EnvUtils.MY_RUBY_HOME));
 
-        assertTrue(envVars.containsKey(RvmUtil.GEM_HOME));
-        assertEquals(RvmFixtures.GEM_HOME, envVars.get(RvmUtil.GEM_HOME));
+        assertTrue(envVars.containsKey(EnvUtils.GEM_HOME));
+        assertEquals(RvmFixtures.GEM_HOME, envVars.get(EnvUtils.GEM_HOME));
 
-        assertTrue(envVars.containsKey(RvmUtil.GEM_PATH));
+        assertTrue(envVars.containsKey(EnvUtils.GEM_PATH));
 
-        assertTrue(envVars.containsKey(RvmUtil.BUNDLE_HOME));
-        assertEquals(RvmFixtures.BUNDLE_HOME, envVars.get(RvmUtil.BUNDLE_HOME));
+        assertTrue(envVars.containsKey(EnvUtils.BUNDLE_HOME));
+        assertEquals(RvmFixtures.BUNDLE_HOME, envVars.get(EnvUtils.BUNDLE_HOME));
 
-        assertTrue(envVars.containsKey(RvmUtil.RVM_RUBY_STRING));
-        assertEquals(mriRuby.getRubyName(), envVars.get(RvmUtil.RVM_RUBY_STRING));
+        assertTrue(envVars.containsKey(RvmUtils.RVM_RUBY_STRING));
+        assertEquals(mriRuby.getRubyName(), envVars.get(RvmUtils.RVM_RUBY_STRING));
 
-        assertTrue(envVars.containsKey(RvmUtil.RVM_GEM_SET));
-        assertEquals(mriRuby.getGemSetName(), envVars.get(RvmUtil.RVM_GEM_SET));
+        assertTrue(envVars.containsKey(RvmUtils.RVM_GEM_SET));
+        assertEquals(mriRuby.getGemSetName(), envVars.get(RvmUtils.RVM_GEM_SET));
 
-        assertTrue(envVars.containsKey(RvmUtil.PATH));
+        assertTrue(envVars.containsKey(EnvUtils.PATH));
 
         assertEquals(RvmFixtures.getMRIRubyRuntimeDefaultBinPath(), envVars.get("PATH"));
     }
@@ -88,7 +90,7 @@ public class RubyLocatorTest {
 
         RubyRuntime rubyRuntime;
 
-        rubyRuntime = rubyLocator.getRubyRuntime("ruby-1.9.3-p0@default");
+        rubyRuntime = rvmRubyLocator.getRubyRuntime("ruby-1.9.3-p0@default");
 
         assertEquals(mriRuby, rubyRuntime);
 
@@ -97,7 +99,7 @@ public class RubyLocatorTest {
         when(fileSystemHelper.pathExists(jRuby.getRubyExecutablePath())).thenReturn(true);
         when(fileSystemHelper.pathExists(jRuby.getGemPath())).thenReturn(true);
 
-        rubyRuntime = rubyLocator.getRubyRuntime("jruby-1.6.5@default");
+        rubyRuntime = rvmRubyLocator.getRubyRuntime("jruby-1.6.5@default");
 
         assertEquals(jRuby, rubyRuntime);
     }
@@ -130,7 +132,7 @@ public class RubyLocatorTest {
         when(fileSystemHelper.pathExists(jRuby.getRubyExecutablePath())).thenReturn(true);
         when(fileSystemHelper.pathExists(jRuby.getGemPath())).thenReturn(true);
 
-        List<RubyRuntime> rubyRuntimeList = rubyLocator.listRubyRuntimes();
+        List<RubyRuntime> rubyRuntimeList = rvmRubyLocator.listRubyRuntimes();
 
         final RubyRuntime mriRubyRails31 = RvmFixtures.getMRIRubyRuntimeRails31GemSet();
 
@@ -154,7 +156,7 @@ public class RubyLocatorTest {
         when(fileSystemHelper.pathExists(mriRuby.getGemPath())).thenReturn(true);
         when(fileSystemHelper.executableFileExists(mriRuby.getGemPath() + "/bin/rake")).thenReturn(true);
 
-        String executablePath = rubyLocator.searchForRubyExecutable("ruby-1.9.3-p0@default", "rake");
+        String executablePath = rvmRubyLocator.searchForRubyExecutable("ruby-1.9.3-p0@default", "rake");
 
         assertEquals(mriRuby.getGemPath() + "/bin/rake", executablePath);
 
@@ -170,7 +172,7 @@ public class RubyLocatorTest {
         when(fileSystemHelper.pathExists(mriRuby.getGemPath())).thenReturn(true);
         when(fileSystemHelper.executableFileExists(mriRuby.getGemPath() + "/bin/rake")).thenReturn(false);
 
-        rubyLocator.searchForRubyExecutable("ruby-1.9.3-p0@default", "rake");
+        rvmRubyLocator.searchForRubyExecutable("ruby-1.9.3-p0@default", "rake");
     }
 
 
@@ -183,8 +185,8 @@ public class RubyLocatorTest {
                         "ruby-1.9.3-p0")
         );
 
-        assertTrue(rubyLocator.hasRuby("ruby-1.9.3-p0"));
-        assertTrue(rubyLocator.hasRuby("jruby-1.6.5"));
-        assertFalse(rubyLocator.hasRuby("ruby-1.9.2-p0"));
+        assertTrue(rvmRubyLocator.hasRuby("ruby-1.9.3-p0"));
+        assertTrue(rvmRubyLocator.hasRuby("jruby-1.6.5"));
+        assertFalse(rvmRubyLocator.hasRuby("ruby-1.9.2-p0"));
     }
 }

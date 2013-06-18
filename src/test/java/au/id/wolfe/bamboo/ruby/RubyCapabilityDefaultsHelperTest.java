@@ -1,9 +1,10 @@
 package au.id.wolfe.bamboo.ruby;
 
+import au.id.wolfe.bamboo.ruby.common.RubyRuntimeLocatorService;
+import au.id.wolfe.bamboo.ruby.common.RubyRuntime;
 import au.id.wolfe.bamboo.ruby.fixtures.RvmFixtures;
-import au.id.wolfe.bamboo.ruby.rvm.RubyLocator;
-import au.id.wolfe.bamboo.ruby.rvm.RubyRuntime;
-import au.id.wolfe.bamboo.ruby.rvm.RvmLocatorService;
+import au.id.wolfe.bamboo.ruby.locator.RubyLocatorServiceFactory;
+import au.id.wolfe.bamboo.ruby.rvm.RvmRubyLocator;
 import com.atlassian.bamboo.v2.build.agent.capability.CapabilityImpl;
 import com.atlassian.bamboo.v2.build.agent.capability.CapabilitySet;
 import com.google.common.collect.Lists;
@@ -12,7 +13,10 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import static java.util.Arrays.asList;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -22,11 +26,16 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.class)
 public class RubyCapabilityDefaultsHelperTest {
 
-    @Mock
-    RvmLocatorService rvmLocatorService;
+    private static final Logger log = LoggerFactory.getLogger(RubyCapabilityDefaultsHelperTest.class);
 
     @Mock
-    RubyLocator rubyLocator;
+    RubyLocatorServiceFactory rubyLocatorServiceFactory;
+
+    @Mock
+    RubyRuntimeLocatorService rubyRuntimeLocatorService;
+
+    @Mock
+    RvmRubyLocator rvmRubyLocator;
 
     @Mock
     CapabilitySet capabilitySet;
@@ -36,7 +45,9 @@ public class RubyCapabilityDefaultsHelperTest {
     @Before
     public void setUp() throws Exception {
 
-        rubyCapabilityDefaultsHelper = new RubyCapabilityDefaultsHelper(rvmLocatorService);
+        rubyCapabilityDefaultsHelper = new RubyCapabilityDefaultsHelper(rubyLocatorServiceFactory);
+
+        when(rubyLocatorServiceFactory.getLocatorServices()).thenReturn(Lists.newArrayList(rubyRuntimeLocatorService));
 
     }
 
@@ -46,12 +57,14 @@ public class RubyCapabilityDefaultsHelperTest {
         final RubyRuntime rubyRuntimeMRI = RvmFixtures.getMRIRubyRuntimeDefaultGemSet();
         final RubyRuntime rubyRuntimeJRuby = RvmFixtures.getJRubyRuntimeDefaultGemSet();
 
-        when(rvmLocatorService.getRvmRubyLocator()).thenReturn(rubyLocator);
-        when(rubyLocator.listRubyRuntimes()).thenReturn(Lists.<RubyRuntime>newArrayList(rubyRuntimeMRI, rubyRuntimeJRuby));
+        when(rubyRuntimeLocatorService.getRuntimeManagerName()).thenReturn("RVM");
+        when(rubyRuntimeLocatorService.getRubyLocator()).thenReturn(rvmRubyLocator);
+        when(rubyRuntimeLocatorService.isInstalled()).thenReturn(true);
+        when(rvmRubyLocator.listRubyRuntimes()).thenReturn(asList(rubyRuntimeMRI, rubyRuntimeJRuby));
 
         rubyCapabilityDefaultsHelper.addDefaultCapabilities(capabilitySet);
 
-        verify(capabilitySet).addCapability(new CapabilityImpl("system.builder.ruby." + rubyRuntimeMRI.getRubyRuntimeName(), rubyRuntimeMRI.getRubyExecutablePath()));
-        verify(capabilitySet).addCapability(new CapabilityImpl("system.builder.ruby." + rubyRuntimeJRuby.getRubyRuntimeName(), rubyRuntimeJRuby.getRubyExecutablePath()));
+        verify(capabilitySet).addCapability(new CapabilityImpl("system.builder.ruby.RVM " + rubyRuntimeMRI.getRubyRuntimeName(), rubyRuntimeMRI.getRubyExecutablePath()));
+        verify(capabilitySet).addCapability(new CapabilityImpl("system.builder.ruby.RVM " + rubyRuntimeJRuby.getRubyRuntimeName(), rubyRuntimeJRuby.getRubyExecutablePath()));
     }
 }

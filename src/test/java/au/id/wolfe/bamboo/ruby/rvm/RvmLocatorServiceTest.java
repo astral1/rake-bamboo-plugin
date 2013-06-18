@@ -1,7 +1,9 @@
 package au.id.wolfe.bamboo.ruby.rvm;
 
-import au.id.wolfe.bamboo.ruby.rvm.util.FileSystemHelper;
-import au.id.wolfe.bamboo.ruby.rvm.util.SystemHelper;
+import au.id.wolfe.bamboo.ruby.common.PathNotFoundException;
+import au.id.wolfe.bamboo.ruby.locator.RubyLocator;
+import au.id.wolfe.bamboo.ruby.util.FileSystemHelper;
+import au.id.wolfe.bamboo.ruby.util.SystemHelper;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -25,11 +27,11 @@ public class RvmLocatorServiceTest {
     @Mock
     private SystemHelper systemHelper;
 
-    private RvmLocatorService rvmLocatorService;
+    private RvmRubyRuntimeLocatorService rvmLocatorService;
 
     @Before
     public void setup() {
-        rvmLocatorService = new RvmLocatorService(fileSystemHelper, systemHelper);
+        rvmLocatorService = new RvmRubyRuntimeLocatorService(fileSystemHelper, systemHelper);
     }
 
     @Test
@@ -81,9 +83,9 @@ public class RvmLocatorServiceTest {
 
         primeMockWithRvmInstallation(userRvm);
 
-        RubyLocator rubyLocator = rvmLocatorService.getRvmRubyLocator();
+        RubyLocator rvmRubyLocator = rvmLocatorService.getRvmRubyLocator();
 
-        assertNotNull(rubyLocator);
+        assertNotNull(rvmRubyLocator);
 
     }
 
